@@ -5,6 +5,11 @@ import java.util.List;
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.aggregation.Aggregation;
+import org.springframework.data.mongodb.core.aggregation.AggregationResults;
+import org.springframework.data.mongodb.core.aggregation.GroupOperation;
+import org.springframework.data.mongodb.core.aggregation.MatchOperation;
+import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Repository;
 
@@ -22,7 +27,7 @@ public class MongoMovieRepository {
  //    native MongoDB query here
  //
  public void batchInsertMovies(List<Document> documents) {
-    
+
     mongoTemplate.insert(documents,"imdb");
 
  }
@@ -50,6 +55,35 @@ public class MongoMovieRepository {
  //
  //    native MongoDB query here
  //
+ /*
+  * db.imdb.aggregate([
+    {
+        $group: {
+            _id: "$directors",
+            imdb_id: {
+                $push: "$imdb_id"
+            }
+        }
+    }
+])
+  */
+    public List<Document> getAggregate() {
+        MatchOperation matchStage = Aggregation.match(Criteria.where("directors").regex("David Leitch","i"));
+        
+        GroupOperation groupStage = Aggregation.group("directors")
+            .push("$imdb_id").as("imdb_id");
+
+        Aggregation pipeline = Aggregation.newAggregation(
+            matchStage,
+            groupStage
+
+        );
+
+        AggregationResults<Document> results = mongoTemplate.aggregate(pipeline, "imdb",Document.class);
+        List<Document> documents = results.getMappedResults();
+        System.out.println(documents.size());
+        return documents;
+    }
 
 
 }

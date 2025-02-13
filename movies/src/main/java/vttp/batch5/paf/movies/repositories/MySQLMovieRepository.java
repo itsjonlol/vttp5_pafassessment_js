@@ -1,12 +1,15 @@
 package vttp.batch5.paf.movies.repositories;
 
+import java.util.ArrayList;
 import java.util.List;
 
+import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Repository;
 
+import vttp.batch5.paf.movies.models.DirectorProfile;
 import vttp.batch5.paf.movies.models.MYSQLMovie;
 
 @Repository
@@ -19,6 +22,10 @@ public class MySQLMovieRepository {
 
   public static final String SQL_BATCH_INSERT_MOVIES = "insert into imdb values(?,?,?,?,?,?,?);";
   public static final String SQL_COUNT_RECORDS = "select count(*) as n_records from imdb";
+  public static final String SQL_GET_SUMMARY= """
+  select sum(revenue) total_revenue ,sum(budget) total_budget,sum((revenue-budget)) margin from imdb
+  where imdb_id in ("tt5463162","tt6806448");
+      """;;
     
   public void batchInsertMovies(List<MYSQLMovie> mysqlMovies) {
     List<Object[]> params = mysqlMovies.stream()
@@ -36,8 +43,11 @@ public class MySQLMovieRepository {
     try {
       template.batchUpdate(SQL_BATCH_INSERT_MOVIES, params);
     } catch (Exception ex) {
+      
       ex.getMessage();
     }
+    
+    
     
    
   }
@@ -52,7 +62,35 @@ public class MySQLMovieRepository {
   
   // TODO: Task 3
 
-  public void getTopDirectors() {
+  public List<DirectorProfile> getTopDirectors(List<Document> documents) {
+    
+    // List<String> imdb_ids = documents.get(0).getList("imdb_id",String.class);
+    SqlRowSet rs= template.queryForRowSet(SQL_GET_SUMMARY);
+    List<DirectorProfile> directorProfiles = new ArrayList<>();
+    String name = documents.get(0).getString("_id");
+    List<String> imdb_ids = documents.get(0).getList("imdb_id",String.class);
+  
+
+
+
+
+
+    
+
+    while (rs.next()) {
+      DirectorProfile directorProfile = new DirectorProfile();
+      directorProfile.setDirector_name(name);
+      directorProfile.setMovies_count(imdb_ids.size());
+      directorProfile.setTotal_revenue(rs.getBigDecimal("total_revenue"));
+      
+      
+      directorProfile.setTotal_budget(rs.getBigDecimal("total_budget"));
+      directorProfile.setMargin(rs.getBigDecimal("margin"));
+      directorProfiles.add(directorProfile);
+    }
+    System.out.println(directorProfiles.size());
+    return directorProfiles;
+
     
   }
 

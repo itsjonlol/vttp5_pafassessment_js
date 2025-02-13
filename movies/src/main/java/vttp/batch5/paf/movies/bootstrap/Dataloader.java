@@ -4,7 +4,9 @@ import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringReader;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.zip.ZipEntry;
@@ -23,6 +25,7 @@ import jakarta.json.JsonReader;
 import vttp.batch5.paf.movies.models.MYSQLMovie;
 import vttp.batch5.paf.movies.repositories.MongoMovieRepository;
 import vttp.batch5.paf.movies.repositories.MySQLMovieRepository;
+import vttp.batch5.paf.movies.services.MovieService;
 
 @Component
 public class Dataloader implements CommandLineRunner {
@@ -32,6 +35,9 @@ public class Dataloader implements CommandLineRunner {
 
   @Autowired
   MongoMovieRepository mongoMovieRepo;
+
+  @Autowired
+  MovieService movieService;
   
   //TODO: Task 2
 
@@ -100,6 +106,7 @@ public class Dataloader implements CommandLineRunner {
             
             JsonObject jsonResult = r.readObject();
             // Document document = new Document();
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
             String imdb_id;
             try {
               imdb_id = jsonResult.getString("imdb_id","");
@@ -118,9 +125,10 @@ public class Dataloader implements CommandLineRunner {
             } catch (Exception ex) {
               vote_count = 0;
             }
-            String release_date = jsonResult.getString("release_date","");
+            String release_date;
             try {
               release_date = jsonResult.getString("release_date","");
+            
             } catch (Exception ex) {
               release_date = "";
             }
@@ -179,12 +187,32 @@ public class Dataloader implements CommandLineRunner {
             } catch (Exception e) {
               imdb_votes = 0;
             }
+            
             document.put("imdb_rating",imdb_votes);
-            documents.add(document);
+            Date date = sdf.parse(release_date);
+            // LocalDate localDate = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+            // if (localDate.getYear() >= 2018) {
+            //   documents.add(document);
+            //   mysqlMovies.add(mysqlMovie);
+            // }
+            String yearString = release_date.substring(0,4);
+            if (Integer.parseInt(yearString) >=2018) {
+              documents.add(document);
+              mysqlMovies.add(mysqlMovie);
+            }
+            
+           
+            
   
-            if (i % 25 == 0) {
-              mySQLMovieRepo.batchInsertMovies(mysqlMovies);
-              mongoMovieRepo.batchInsertMovies(documents);
+            if (mysqlMovies.size() % 25 == 0) {
+              try {
+                movieService.batchUpdate(mysqlMovies, documents);
+              } catch (RuntimeException ex) {
+                  ex.getMessage();
+              }
+              
+              // mySQLMovieRepo.batchInsertMovies(mysqlMovies);
+              // mongoMovieRepo.batchInsertMovies(documents);
               mysqlMovies = new ArrayList<>();
               documents = new ArrayList<>();
             }
