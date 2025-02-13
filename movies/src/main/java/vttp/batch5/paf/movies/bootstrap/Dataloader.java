@@ -14,6 +14,7 @@ import java.util.zip.ZipFile;
 
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
@@ -38,6 +39,12 @@ public class Dataloader implements CommandLineRunner {
 
   @Autowired
   MovieService movieService;
+
+  @Value("${folder}")
+  private String folder;
+
+  @Value("${filename}")
+  private String filename;
   
   //TODO: Task 2
 
@@ -54,8 +61,11 @@ public class Dataloader implements CommandLineRunner {
     List<Document> documents = new ArrayList<>();
 
     //step 1 -> check to see if data has been loaded into either of the 2 databases
-
-    ZipFile zipFile = new ZipFile("../data/movies_post_2010.zip");
+    // String pathName = "../" + folder + "/"+ filename;
+    String pathName = "movies_post_2010.zip";
+    // ZipFile zipFile = new ZipFile("../data/movies_post_2010.zip");
+    ZipFile zipFile = new ZipFile(pathName);
+    
     
 
     Enumeration<? extends ZipEntry> entries = zipFile.entries();
@@ -98,9 +108,7 @@ public class Dataloader implements CommandLineRunner {
           for ( int i = 0; i< jsonArray.size();i++) {
           
           
-          
-
-
+        
             String jsonObjectString = jsonArray.getString(i);
             JsonReader r = Json.createReader(new StringReader(jsonObjectString));
             
@@ -162,7 +170,7 @@ public class Dataloader implements CommandLineRunner {
             mysqlMovie.setBudget(budget);
             mysqlMovie.setRevenue(revenue);
             mysqlMovie.setRuntime(runtime);
-            mysqlMovies.add(mysqlMovie);
+            
             
   
             Document document = new Document();

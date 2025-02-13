@@ -14,8 +14,9 @@ COPY mvnw.cmd .
 COPY .mvn .mvn
 COPY src src
 
+
 # Ensure the mvnw script has execution permissions
-RUN chmod +x mvnw
+RUN chmod a+x mvnw
 
 # Build the application
 #./mvnw
@@ -40,6 +41,7 @@ ARG DEPLOY_DIR=/code_folder
 WORKDIR ${DEPLOY_DIR}
 #change the names here
 COPY --from=compiler /app/target/movies-0.0.1-SNAPSHOT.jar movies.jar
+#COPY ./data .
 
 # Set the server port
 ENV SERVER_PORT=8080
