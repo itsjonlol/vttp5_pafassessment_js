@@ -15,6 +15,7 @@ COPY .mvn .mvn
 COPY src src
 
 
+
 # Ensure the mvnw script has execution permissions
 RUN chmod a+x mvnw
 
